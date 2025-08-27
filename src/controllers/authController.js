@@ -55,7 +55,12 @@ exports.login = async (req, res) => {
     req.session.userId = user._id;
 
     req.flash("success", "Logged in successfully");
-    res.redirect("/dashboard");
+    // Redirect based on role
+    if (user.role === "admin") {
+      return res.redirect("/admin/dashboard");
+    } else {
+      return res.redirect("/dashboard");
+    }
   } catch (err) {
     console.error(err);
     req.flash("error", "Login failed");
