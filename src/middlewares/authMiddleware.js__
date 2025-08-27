@@ -1,0 +1,39 @@
+// authMiddleware.js
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+
+// Middleware to check if user is logged in
+exports.authMiddleware = async (req, res, next) => {
+  try {
+    // You can store user ID in session or JWT in cookie
+    const token = req.cookies.token;
+    if (!token) {
+      req.flash("error", "You must be logged in");
+      return res.redirect("/login");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      req.flash("error", "User not found");
+      return res.redirect("/login");
+    }
+
+    req.user = user; // attach user to request
+    next();
+  } catch (err) {
+    console.error("Auth Middleware Error:", err);
+    req.flash("error", "Authentication failed");
+    return res.redirect("/login");
+  }
+};
+
+// Middleware to check admin access
+exports.adminMiddleware = (req, res, next) => {
+  if (req.user && req.user.isAdmin) {
+    next();
+  } else {
+    req.flash("error", "Admin access only");
+    res.redirect("/dashboard");
+  }
+};
